@@ -149,8 +149,8 @@ export const MOCK_ARTISANS: Artisan[] = [
       'Royal Elephant Procession',
     ],
     images: [
-      '/assets/artisans/mohanlal-1.jpg',
-      '/assets/artisans/mohanlal-2.jpg',
+      'assets/artisans/mohanlal-1.jpg',
+      'assets/artisans/mohanlal-2.jpg',
     ],
     heritageBadges: [
       'National Heritage Artisan Registry #RAJ-UD-094',
@@ -214,7 +214,7 @@ export const MOCK_ARTISANS: Artisan[] = [
       'Authentic Whistle Sounder (Ghori)',
     ],
     images: [
-      '/assets/artisans/kishanlal-1.jpg',
+      'assets/artisans/kishanlal-1.jpg',
     ],
     heritageBadges: [
       'Bhat Clan Master Craftsman',
@@ -265,7 +265,7 @@ export const MOCK_ARTISANS: Artisan[] = [
       'Decorative Hand-painted Ceramic Tiles',
     ],
     images: [
-      '/assets/artisans/ramswaroop-1.jpg',
+      'assets/artisans/ramswaroop-1.jpg',
     ],
     heritageBadges: [
       'Prajapat Guild Certified',
@@ -316,7 +316,7 @@ export const MOCK_ARTISANS: Artisan[] = [
       'Traditional Royal Ittardaan (Perfume Flacons)',
     ],
     images: [
-      '/assets/artisans/chimanlal-1.jpg',
+      'assets/artisans/chimanlal-1.jpg',
     ],
     heritageBadges: [
       '92.5 Pure Silver Guaranteed',
@@ -367,7 +367,7 @@ export const MOCK_ARTISANS: Artisan[] = [
       'Ancient Teakwood Geometric Blocks',
     ],
     images: [
-      '/assets/artisans/bhanwarlal-1.jpg',
+      'assets/artisans/bhanwarlal-1.jpg',
     ],
     heritageBadges: [
       '100% Plant Indigo & River Clay',
@@ -418,7 +418,7 @@ export const MOCK_ARTISANS: Artisan[] = [
       'Fresh Masala Chaas with Mint Clay Pots',
     ],
     images: [
-      '/assets/artisans/gopaldas-1.jpg',
+      'assets/artisans/gopaldas-1.jpg',
     ],
     heritageBadges: [
       '100% Desi Cow Ghee Guaranteed',
@@ -469,7 +469,7 @@ export const MOCK_ARTISANS: Artisan[] = [
       'Vegetable Bark Tanned Camel Leather',
     ],
     images: [
-      '/assets/artisans/ratanlal-1.jpg',
+      'assets/artisans/ratanlal-1.jpg',
     ],
     heritageBadges: [
       'Babool Bark Vegetable Tanned',

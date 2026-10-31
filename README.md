@@ -9,6 +9,11 @@ ratings are impossible.
 Built with React 19 + Vite + Tailwind 4, wrapped as a native Android app with Capacitor 8.
 Saved artisans and verified reviews sync in real time through Firestore (with an offline cache).
 
+**Live demo:** https://lavish9463.github.io/virasat-edge/
+— the web version runs in demo mode (a slider stands in for walking, because browsers can't read
+Bluetooth beacon signal). Real beacon detection, lane alerts and verified reviews need the Android
+app built from this repo.
+
 ---
 
 ## How Proof-of-Presence works
@@ -56,6 +61,15 @@ Flash each lane node as an **iBeacon**:
 
 Lane ↔ minor mapping lives in `src/data/mockData.ts` (`hardware.minor`). You can verify a node with
 nRF Connect: it should show "Virasat Edge (iBeacon)" with the values above.
+
+---
+
+## Deployment
+
+Every push to `main` runs the tests, builds the web app and publishes it to GitHub Pages
+(`.github/workflows/deploy-pages.yml`). Asset paths are relative (`base: './'` in
+`vite.config.ts`), so the same build works on Pages, inside the Android app and at any domain root.
+Environment files (`.env*`) are git-ignored and never committed.
 
 ---
 

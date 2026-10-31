@@ -115,7 +115,7 @@ export const BlueprintTab: React.FC = () => {
               </div>
             </div>
             <a
-              href="/assets/aistudio/Virasat_Edge_Master_Hackathon_Blueprint_0fa41ae6.pdf"
+              href="assets/aistudio/Virasat_Edge_Master_Hackathon_Blueprint_0fa41ae6.pdf"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-300 font-semibold"
@@ -136,7 +136,7 @@ export const BlueprintTab: React.FC = () => {
               </div>
             </div>
             <a
-              href="/assets/aistudio/WhatsApp_Video_2026-10-21_at_9.19.32_AM_2eb1b1a4.mp4"
+              href="assets/aistudio/WhatsApp_Video_2026-10-21_at_9.19.32_AM_2eb1b1a4.mp4"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold"

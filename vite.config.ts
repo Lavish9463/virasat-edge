@@ -5,6 +5,9 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    // Relative asset URLs: the same build works at a domain root, inside the Android app
+    // (https://localhost/) and under the GitHub Pages sub-path (/virasat-edge/).
+    base: './',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
