@@ -1,0 +1,6 @@
+{
+  "name": "Virasat Edge - Hidden Heritage",
+  "description": "Privacy-first Android proximity discovery app for authentic heritage artisans in historic lanes using ESP32 BLE beacons and Edge Impulse crowd sensing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

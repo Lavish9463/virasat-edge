@@ -1,0 +1,12 @@
+{
+  "appId": "com.virasatedge.heritage",
+  "appName": "Virasat Edge",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "entities": {
+    "SavedArtisan": {
+      "title": "SavedArtisan",
+      "description": "Represents an artisan bookmarked for the heritage walking trail that syncs in real time across all screens",
+      "type": "object",
+      "properties": {
+        "artisanId": {
+          "type": "string",
+          "description": "Unique identifier of the artisan"
+        },
+        "artisanName": {
+          "type": "string",
+          "description": "Name of the artisan"
+        },
+        "laneName": {
+          "type": "string",
+          "description": "Name of the heritage lane"
+        },
+        "savedAt": {
+          "type": "string",
+          "description": "ISO timestamp when the artisan was saved"
+        },
+        "savedBy": {
+          "type": "string",
+          "description": "Visitor device or user identifier"
+        }
+      },
+      "required": ["artisanId", "artisanName", "savedAt"]
+    },
+    "VerifiedReview": {
+      "title": "VerifiedReview",
+      "description": "Authentic on-site review signed with physical BLE beacon Proof of Presence",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the review"
+        },
+        "artisanId": {
+          "type": "string",
+          "description": "ID of the artisan being reviewed"
+        },
+        "userName": {
+          "type": "string",
+          "description": "Name of the reviewer"
+        },
+        "userCity": {
+          "type": "string",
+          "description": "City of the reviewer"
+        },
+        "date": {
+          "type": "string",
+          "description": "Relative or formatted review date"
+        },
+        "rating": {
+          "type": "number",
+          "description": "Experience rating out of 5"
+        },
+        "comment": {
+          "type": "string",
+          "description": "Review comment"
+        },
+        "proofOfPresenceBeaconId": {
+          "type": "string",
+          "description": "ESP32 beacon code that verified presence"
+        },
+        "verifiedRssi": {
+          "type": "number",
+          "description": "RSSI in dBm at time of review"
+        },
+        "isVerifiedPresence": {
+          "type": "boolean",
+          "description": "Whether physical presence was cryptographically verified"
+        }
+      },
+      "required": ["artisanId", "userName", "rating", "comment", "isVerifiedPresence"]
+    }
+  },
+  "firestore": {
+    "/saved_artisans/{artisanId}": {
+      "schema": {
+        "$ref": "#/entities/SavedArtisan"
+      },
+      "description": "Shared real-time saved artisan bookmarks synchronized across all connected visitor devices"
+    },
+    "/artisan_reviews/{reviewId}": {
+      "schema": {
+        "$ref": "#/entities/VerifiedReview"
+      },
+      "description": "Global verified reviews published with physical ESP32 proof of presence"
+    }
+  }
+}

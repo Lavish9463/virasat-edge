@@ -1,0 +1,29 @@
+# Dependencies & build output
+node_modules/
+dist/
+build/
+coverage/
+*.log
+.DS_Store
+
+# Environment files: never commit any of them (templates included)
+.env
+.env.*
+*.env
+
+# Local tooling / IDE / AI Studio workspace
+.idea/
+.vscode/
+.aistudio/
+.vercel/
+
+# Android: machine-specific paths, build output, binaries and signing keys
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+*.apk
+*.aab
+*.jks
+*.keystore
+keystore.properties

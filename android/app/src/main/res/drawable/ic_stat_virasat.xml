@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Monochrome status-bar icon for notifications (Android tints it; must be a white silhouette). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <group
+        android:pivotX="256"
+        android:pivotY="240"
+        android:scaleX="1.4"
+        android:scaleY="1.4"
+        android:translateY="16">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M128,390 V230 C128,160 200,110 256,90 C312,110 384,160 384,230 V390 H336 V240 C336,195 290,160 256,148 C222,160 176,195 176,240 V390 Z" />
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="26"
+            android:pathData="M198,282 a58,58 0 1,0 116,0 a58,58 0 1,0 -116,0" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M232,282 a24,24 0 1,0 48,0 a24,24 0 1,0 -48,0" />
+    </group>
+</vector>

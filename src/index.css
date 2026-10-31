@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@keyframes proximity-ripple {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+@keyframes proximity-glow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.95;
+    filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+    filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.9));
+  }
+}
+
+@keyframes signal-bar-jitter {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  30% {
+    transform: scaleY(0.7);
+  }
+  60% {
+    transform: scaleY(1.15);
+  }
+}
+
+.animate-proximity-ripple {
+  animation: proximity-ripple var(--ripple-duration, 1.2s) cubic-bezier(0.1, 0.2, 0.4, 1) infinite;
+}
+
+.animate-proximity-glow {
+  animation: proximity-glow var(--glow-duration, 1.4s) ease-in-out infinite;
+}
+
+.animate-signal-bar {
+  animation: signal-bar-jitter 0.8s ease-in-out infinite;
+}
+
+/* Lightweight entrance animations (replaces the tailwindcss-animate plugin the markup expects) */
+@keyframes enter-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes enter-slide-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: enter-fade;
+}
+
+.slide-in-from-top-6 {
+  animation-name: enter-fade, enter-slide-from-top;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-in {
+    animation: none;
+  }
+}
