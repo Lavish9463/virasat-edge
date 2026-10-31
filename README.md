@@ -105,6 +105,23 @@ cd android && gradlew testDebugUnitTest
 
 ---
 
+## Data security (Firestore rules)
+
+`firestore.rules` is default-deny. The only allowed writes are the exact shapes the app produces:
+saved artisans (only the real artisans, fixed fields) and beacon-verified reviews (append-only, can't
+be edited or deleted, rating 1–5, bounded text, known tags, plausible signal strength). Everything else,
+including any other collection, is refused.
+
+```bash
+npm run test:rules     # run the rules against the Firestore emulator (needs Java)
+npm run deploy:rules   # publish to the live database (Firebase CLI login required)
+```
+
+Without user sign-in, rules can't prove a write came from the real app; they make abuse hard and
+bounded rather than impossible. For stronger guarantees, add Firebase App Check (Play Integrity).
+
+---
+
 ## Permissions (Android)
 
 | Permission | Why |
