@@ -1,26 +1,106 @@
 rules_version = '2';
+
+// Virasat Edge security rules.
+//
+// The app has no sign-in, so these rules can't prove WHO is writing. What they do guarantee:
+//   * everything not listed below is closed (default deny);
+//   * only the exact document shapes the app writes are accepted (no extra fields, bounded sizes);
+//   * saved artisans and reviews can only reference the real artisans;
+//   * reviews must be hardware-verified ("ble"), are append-only and can never be edited or deleted;
+//   * server timestamps can't be forged.
+// Keep KNOWN_ARTISANS in sync with src/data/mockData.ts and REVIEW_TAGS with
+// src/components/ProofOfPresenceReviewModal.tsx. Tests: firestore-tests/rules.test.mjs.
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Test connection doc
-    match /test/{docId} {
-      allow read, write: if true;
+
+    function knownArtisans() {
+      return [
+        'artisan-mohanlal-miniature',
+        'artisan-kishanlal-puppets',
+        'artisan-ramswaroop-pottery',
+        'artisan-chimanlal-silver',
+        'artisan-bhanwarlal-dabu',
+        'artisan-gopaldas-sweets',
+        'artisan-ratanlal-leather'
+      ];
     }
 
-    // Saved Artisans - synchronized across all connected tourist screens in real time
+    function reviewTags() {
+      return [
+        'Authentic Handcrafted',
+        'Master Demonstration',
+        'Fair Direct Price',
+        'Pure Natural Materials',
+        'Zero Middleman Markup',
+        'Warm Heritage Hospitality'
+      ];
+    }
+
+    function isText(value, minLen, maxLen) {
+      return value is string && value.size() >= minLen && value.size() <= maxLen;
+    }
+
+    // Boot-time connectivity probe: one readable document, never writable.
+    match /test/{docId} {
+      allow get: if docId == 'connection';
+    }
+
+    // Shared saved list (one document per artisan, shared by every phone).
     match /saved_artisans/{artisanId} {
       allow read: if true;
-      allow create, update, delete: if true;
+
+      allow create, update: if artisanId in knownArtisans()
+        && request.resource.data.keys().hasOnly(['artisanId', 'artisanName', 'laneName', 'savedAt', 'serverTime'])
+        && request.resource.data.keys().hasAll(['artisanId', 'artisanName', 'laneName', 'savedAt', 'serverTime'])
+        && request.resource.data.artisanId == artisanId
+        && isText(request.resource.data.artisanName, 1, 120)
+        && isText(request.resource.data.laneName, 1, 120)
+        && isText(request.resource.data.savedAt, 10, 40)
+        && request.resource.data.serverTime == request.time;
+
+      // Un-saving is part of the shared list; only real artisan documents exist to delete.
+      allow delete: if artisanId in knownArtisans();
     }
 
-    // Verified Reviews - submitted with ESP32 Proof of Presence
+    // Proof-of-Presence reviews: append-only, hardware-verified, strictly shaped.
     match /artisan_reviews/{reviewId} {
       allow read: if true;
-      allow create: if request.resource.data.isVerifiedPresence == true 
-                    && request.resource.data.rating >= 1 
-                    && request.resource.data.rating <= 5
-                    && request.resource.data.comment.size() >= 3;
+
+      allow create: if reviewId.matches('^rev-[0-9]{10,16}(-[a-z0-9]{0,10})?$')
+        && request.resource.data.keys().hasOnly([
+             'id', 'artisanId', 'userName', 'userCity', 'date', 'rating', 'comment',
+             'proofOfPresenceBeaconId', 'verifiedRssi', 'tags', 'isVerifiedPresence',
+             'presenceSource', 'createdAt', 'serverTime'])
+        && request.resource.data.keys().hasAll([
+             'id', 'artisanId', 'userName', 'userCity', 'date', 'rating', 'comment',
+             'proofOfPresenceBeaconId', 'verifiedRssi', 'tags', 'isVerifiedPresence',
+             'presenceSource', 'createdAt', 'serverTime'])
+        && request.resource.data.id == reviewId
+        && request.resource.data.artisanId in knownArtisans()
+        && isText(request.resource.data.userName, 1, 40)
+        && isText(request.resource.data.userCity, 1, 40)
+        && isText(request.resource.data.date, 1, 40)
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && isText(request.resource.data.comment, 10, 600)
+        && isText(request.resource.data.proofOfPresenceBeaconId, 1, 120)
+        && request.resource.data.verifiedRssi is number
+        && request.resource.data.verifiedRssi >= -100
+        && request.resource.data.verifiedRssi <= -20
+        && request.resource.data.tags is list
+        && request.resource.data.tags.size() <= 6
+        && request.resource.data.tags.hasOnly(reviewTags())
+        && request.resource.data.isVerifiedPresence == true
+        && request.resource.data.presenceSource == 'ble'
+        && isText(request.resource.data.createdAt, 10, 40)
+        && request.resource.data.serverTime == request.time;
+
+      // Reviews are a permanent record.
       allow update, delete: if false;
     }
+
+    // No other collection is reachable.
   }
 }

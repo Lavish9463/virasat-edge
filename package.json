@@ -11,7 +11,9 @@
     "lint": "tsc --noEmit",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "android:sync": "npm run build && npx cap sync android",
-    "android:apk": "npm run android:sync && cd android && gradlew assembleDebug"
+    "android:apk": "npm run android:sync && cd android && gradlew assembleDebug",
+    "test:rules": "npx -y firebase-tools@latest emulators:exec --only firestore --project demo-virasat \"node --test firestore-tests/rules.test.mjs\"",
+    "deploy:rules": "npx -y firebase-tools@latest deploy --only firestore:rules"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",
