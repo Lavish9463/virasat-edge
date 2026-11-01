@@ -41,6 +41,8 @@ export interface Artisan {
   categoryLabel: string;
   laneId: string;
   laneName: string;
+  /** iBeacon minor of the street lane the workshop is in (see STREET_LANES). */
+  streetMinor: number;
   city: string;
   distanceMeters: number;
   exactAddress: string;
@@ -70,9 +72,15 @@ export interface HardwareNodeSpecs {
   batteryPercentage: number;
   solarPowered: boolean;
   bleUuid: string;
+  /** iBeacon major: identifies the heritage place. Its street-lane nodes share it. */
   major: number;
-  minor: number;
   txPowerDbm: number;
+}
+
+/** A street lane inside a heritage place; its beacon node advertises this iBeacon minor. */
+export interface StreetLane {
+  minor: number;
+  name: string;
 }
 
 export interface LaneBeacon {

@@ -3,7 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Artisan, LaneBeacon } from '../types';
+import { Artisan, LaneBeacon, StreetLane } from '../types';
+
+/**
+ * Every heritage place (iBeacon major) has the same numbered street lanes (iBeacon minor). Lanes are
+ * numbered in walking order, so neighbouring minors are neighbouring lanes.
+ */
+export const STREET_LANES: StreetLane[] = [
+  { minor: 2001, name: 'Street Lane 1' },
+  { minor: 2002, name: 'Street Lane 2' },
+  { minor: 2003, name: 'Street Lane 3' },
+];
 
 export const MOCK_BEACONS: LaneBeacon[] = [
   {
@@ -30,7 +40,6 @@ export const MOCK_BEACONS: LaneBeacon[] = [
       solarPowered: true,
       bleUuid: 'E2C56DB5-DFFB-48D2-B060-D0F5A71096E0',
       major: 101,
-      minor: 2001,
       txPowerDbm: -59,
     },
   },
@@ -57,8 +66,7 @@ export const MOCK_BEACONS: LaneBeacon[] = [
       batteryPercentage: 88,
       solarPowered: true,
       bleUuid: 'E2C56DB5-DFFB-48D2-B060-D0F5A71096E0',
-      major: 101,
-      minor: 2,
+      major: 102,
       txPowerDbm: -59,
     },
   },
@@ -85,8 +93,7 @@ export const MOCK_BEACONS: LaneBeacon[] = [
       batteryPercentage: 96,
       solarPowered: true,
       bleUuid: 'E2C56DB5-DFFB-48D2-B060-D0F5A71096E0',
-      major: 101,
-      minor: 3,
+      major: 103,
       txPowerDbm: -59,
     },
   },
@@ -113,8 +120,7 @@ export const MOCK_BEACONS: LaneBeacon[] = [
       batteryPercentage: 85,
       solarPowered: true,
       bleUuid: 'E2C56DB5-DFFB-48D2-B060-D0F5A71096E0',
-      major: 101,
-      minor: 4,
+      major: 104,
       txPowerDbm: -59,
     },
   },
@@ -131,9 +137,10 @@ export const MOCK_ARTISANS: Artisan[] = [
     categoryLabel: 'Miniature Art',
     laneId: 'lane_gangaur_ghat',
     laneName: 'Gangaur Ghat Marg',
+    streetMinor: 2001,
     city: 'Udaipur, Rajasthan',
     distanceMeters: 15,
-    exactAddress: 'House 14/B, Gali No. 2, 15m inside from Bagore Ghat Main Arch',
+    exactAddress: 'House 14/B, Street Lane 1, 15m inside from Bagore Ghat Main Arch',
     bio: 'Pt. Mohanlal paints with single-hair squirrel tail brushes ground in lapis lazuli, crushed malachite, and 24-carat gold foil. Unlike mass-printed souvenir stalls outside on the commercial roads, each piece takes 3 weeks of hand stroke layering.',
     craftHeritageStory: 'My grandfather learned this court art under the Mewar royal painters. Today, commercial shopkeepers outside sell screen prints as handmade for Rs.  5,000 and pay bot agencies for 5-star Google reviews. We stay hidden 15 meters inside this quiet haveli, relying solely on genuine connoisseurs who find our doorstep.',
     audioStoryDuration: '2m 14s',
@@ -197,9 +204,10 @@ export const MOCK_ARTISANS: Artisan[] = [
     categoryLabel: 'Mewar Puppets',
     laneId: 'lane_gangaur_ghat',
     laneName: 'Gangaur Ghat Marg',
+    streetMinor: 2002,
     city: 'Udaipur, Rajasthan',
     distanceMeters: 22,
-    exactAddress: 'Courtyard Behind Gangaur Temple Chhatri, Lane 2',
+    exactAddress: 'Courtyard Behind Gangaur Temple Chhatri, Street Lane 2',
     bio: 'Kishanlal carves kathputli puppet heads from seasoned desert mango wood (Aam ki lakdi) and dresses them in vintage block-printed gota-patti fabrics with hand-tied string control bars.',
     craftHeritageStory: 'Commercial markets sell plastic heads painted with neon enamel that crack in a month. Our puppets have real wood joints and traditional whistle voices made of bamboo reeds that our clan has used for centuries.',
     audioStoryDuration: '1m 50s',
@@ -222,7 +230,7 @@ export const MOCK_ARTISANS: Artisan[] = [
       'Non-Toxic Vegetable Lacquer',
     ],
     coordinates: { lat: 24.5799, lng: 73.6828 },
-    walkingDirectionsStep: 'Walk 7 meters past Pandit Mohanlals studio; look for the colourful puppets hanging inside the carved stone courtyard.',
+    walkingDirectionsStep: 'Walk 7 meters past Pandit Mohanlals studio and turn into Street Lane 2; look for the colourful puppets hanging inside the carved stone courtyard.',
     reviews: [
       {
         id: 'rev-3',
@@ -248,6 +256,7 @@ export const MOCK_ARTISANS: Artisan[] = [
     categoryLabel: 'Blue Pottery & Terracotta',
     laneId: 'lane_jagdish_temple',
     laneName: 'Jagdish Temple Chohatta Gali',
+    streetMinor: 2001,
     city: 'Udaipur, Rajasthan',
     distanceMeters: 18,
     exactAddress: 'Basement Kiln Gali, 18m behind Jagdish Temple elephant frieze',
@@ -299,9 +308,10 @@ export const MOCK_ARTISANS: Artisan[] = [
     categoryLabel: 'Silver Filigree',
     laneId: 'lane_jagdish_temple',
     laneName: 'Jagdish Temple Chohatta Gali',
+    streetMinor: 2002,
     city: 'Udaipur, Rajasthan',
     distanceMeters: 28,
-    exactAddress: 'Haveli Rawal, Second Mezzanine, Chohatta Alley',
+    exactAddress: 'Haveli Rawal, Second Mezzanine, Street Lane 2',
     bio: 'Chimanlal and his sons draw 92.5 pure silver ingots through progressively microscopic diamond dies until the wire is as thin as silk thread, twisting it with hand tweezers into lace jewelry.',
     craftHeritageStory: 'Tarakashi requires unbelievable eyesight and patience. One silver peacock pendant takes 3 days of wire bending. You will never find this in city mall showrooms because machines cannot replicate hand-twisted filigree wire tension.',
     audioStoryDuration: '1m 40s',
@@ -324,7 +334,7 @@ export const MOCK_ARTISANS: Artisan[] = [
       'Blowpipe Hand-Soldered Filigree',
     ],
     coordinates: { lat: 24.5826, lng: 73.6848 },
-    walkingDirectionsStep: 'Walk 10 meters deeper into the Jagdish Gali past the pottery shop, look for the brass-studded teak door on your right.',
+    walkingDirectionsStep: 'Walk past the pottery shop and turn into Street Lane 2, look for the brass-studded teak door on your right.',
     reviews: [
       {
         id: 'rev-5',
@@ -350,6 +360,7 @@ export const MOCK_ARTISANS: Artisan[] = [
     categoryLabel: 'Dabu & Khadi Handloom',
     laneId: 'lane_hathi_pol',
     laneName: 'Hathi Pol Ancient Weaver Alley',
+    streetMinor: 2001,
     city: 'Udaipur, Rajasthan',
     distanceMeters: 14,
     exactAddress: 'Chippa Wada, 14m inside Hathi Pol Gateway Lane',
@@ -401,9 +412,10 @@ export const MOCK_ARTISANS: Artisan[] = [
     categoryLabel: 'Heritage Food & Sweets',
     laneId: 'lane_hathi_pol',
     laneName: 'Hathi Pol Ancient Weaver Alley',
+    streetMinor: 2002,
     city: 'Udaipur, Rajasthan',
     distanceMeters: 19,
-    exactAddress: 'Corner 19, Chippa Wada, 19m inside Hathi Pol',
+    exactAddress: 'Corner 19, Chippa Wada, Street Lane 2',
     bio: 'Fresh crisp honeycomb Malai Ghewar prepared in pure country cow ghee over wood-coal bhatti, served with hand-whipped cardamom rabri.',
     craftHeritageStory: 'Commercial sweet franchises use hydrogenated oils and artificial essence. Gopal Das’s recipe has remained untouched since 1958 with raw milk reduced over 5 hours.',
     audioStoryDuration: '1m 30s',
@@ -426,7 +438,7 @@ export const MOCK_ARTISANS: Artisan[] = [
       'Fresh Daily Hand-Reduced Rabri',
     ],
     coordinates: { lat: 24.5888, lng: 73.6895 },
-    walkingDirectionsStep: 'Walk 5 meters past Bhanwarlal weaver shop; follow the fragrant aroma of boiling desi ghee and cardamom.',
+    walkingDirectionsStep: 'Walk 5 meters past Bhanwarlal weaver shop into Street Lane 2; follow the fragrant aroma of boiling desi ghee and cardamom.',
     reviews: [
       {
         id: 'rev-7',
@@ -452,9 +464,10 @@ export const MOCK_ARTISANS: Artisan[] = [
     categoryLabel: 'Camel Leather Mojari',
     laneId: 'lane_bhatiyani',
     laneName: 'Bhatiyani Chohatta Leather Crafters',
+    streetMinor: 2001,
     city: 'Udaipur, Rajasthan',
     distanceMeters: 16,
-    exactAddress: 'Lane 4, 16m behind Vintage Clock Tower',
+    exactAddress: 'Street Lane 1, 16m behind Vintage Clock Tower',
     bio: 'Hand-stitched traditional camel leather juttis with pure cotton thread, zero chemical glue, and intricate Resham silk thread embroidery that molds naturally to the foot.',
     craftHeritageStory: 'Synthetic faux-leather shoes cause blisters in heat. Authentic camel leather mojaris become softer with every mile you walk, breathing naturally through hot desert stones.',
     audioStoryDuration: '1m 45s',

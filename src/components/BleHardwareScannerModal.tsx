@@ -27,7 +27,6 @@ import { PairedHardware } from '../types';
 interface BleHardwareScannerModalProps {
   isNative: boolean;
   onClose: () => void;
-  activeLaneName: string;
   activeBeaconCode: string;
   pairedHardware: PairedHardware | null;
   liveReading: LiveReading | null;
@@ -50,7 +49,6 @@ const pairedTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', mi
 export const BleHardwareScannerModal: React.FC<BleHardwareScannerModalProps> = ({
   isNative,
   onClose,
-  activeLaneName,
   activeBeaconCode,
   pairedHardware,
   liveReading,
@@ -568,9 +566,10 @@ export const BleHardwareScannerModal: React.FC<BleHardwareScannerModalProps> = (
                 title: '1. Flash the ESP32 as an iBeacon',
                 body: (
                   <>
-                    UUID <code className="text-amber-300 break-all">{HERITAGE_BEACON_UUID}</code>, major{' '}
-                    <code className="text-amber-300">101</code>, a unique minor per lane (
-                    <code className="text-amber-300">2001</code> = Gangaur Ghat), measured power{' '}
+                    UUID <code className="text-amber-300 break-all">{HERITAGE_BEACON_UUID}</code>, major = place (
+                    <code className="text-amber-300">101</code> = Gangaur Ghat … <code className="text-amber-300">104</code> =
+                    Bhatiyani), minor = street lane (<code className="text-amber-300">2001</code>–
+                    <code className="text-amber-300">2003</code> = Street Lane 1–3), measured power{' '}
                     <code className="text-amber-300">-59 dBm</code> at 1 m, device name “Virasat Edge”.
                   </>
                 ),
@@ -581,7 +580,7 @@ export const BleHardwareScannerModal: React.FC<BleHardwareScannerModalProps> = (
               },
               {
                 title: '3. Walk to the lane',
-                body: `The Radar switches to the lane it detects (${activeLaneName.split('(')[0].trim()} for minor 2001). Reviews unlock within roughly 2–3 m and lock again ~7 s after the signal disappears. Use “Set unlock spot here” to calibrate for your phone and venue.`,
+                body: `The Nearby tab switches to the place and street lane it detects (e.g. major 101 / minor 2002 = Gangaur Ghat Marg, Street Lane 2). Reviews unlock within roughly 2–3 m of that lane's beacon and lock again ~7 s after the signal disappears. Use “Unlock reviews from here” (About → Beacon hardware) to calibrate for your phone and venue.`,
               },
               {
                 title: '4. Alerts with the app closed',

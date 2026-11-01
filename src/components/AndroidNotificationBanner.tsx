@@ -57,7 +57,9 @@ export const AndroidNotificationBanner: React.FC<AndroidNotificationBannerProps>
             <span>You are near {laneName}!</span>
           </h4>
           <p className="text-xs text-stone-300 mt-0.5 line-clamp-2">
-            {artisanCount} verified 3rd-generation heritage artisans are located just {Math.round(distanceMeters)}m inside this alleyway.
+            {artisanCount > 0
+              ? `${artisanCount} verified heritage artisan${artisanCount === 1 ? ' is' : 's are'} located just ${Math.round(distanceMeters)}m inside this lane.`
+              : 'Tap to browse the masters in the nearest lanes.'}
           </p>
         </div>
 

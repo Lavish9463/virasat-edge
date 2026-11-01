@@ -11,10 +11,12 @@ import { Esp32NodeInspector } from './Esp32NodeInspector';
 interface AboutTabProps {
   activeBeacon: LaneBeacon;
   onOpenBleGuide: () => void;
+  /** Live signal, unlock calibration and background alerts (installed app only). */
+  signalPanel?: React.ReactNode;
 }
 
-/** Project story and hardware specs, kept out of the visitor's main flow. */
-export const AboutTab: React.FC<AboutTabProps> = ({ activeBeacon, onOpenBleGuide }) => {
+/** Project story, live signal tools and hardware specs, kept out of the visitor's main flow. */
+export const AboutTab: React.FC<AboutTabProps> = ({ activeBeacon, onOpenBleGuide, signalPanel }) => {
   const [section, setSection] = useState<'project' | 'hardware'>('project');
 
   return (
@@ -44,7 +46,17 @@ export const AboutTab: React.FC<AboutTabProps> = ({ activeBeacon, onOpenBleGuide
       {section === 'project' ? (
         <BlueprintTab />
       ) : (
-        <Esp32NodeInspector activeBeacon={activeBeacon} onOpenBleGuide={onOpenBleGuide} />
+        <>
+          {signalPanel && (
+            <section aria-label="Live signal" className="px-4 pt-4">
+              <div className="rounded-3xl border border-stone-800 bg-stone-900 p-4 space-y-3">
+                <h3 className="text-sm font-bold text-stone-100">Live signal</h3>
+                {signalPanel}
+              </div>
+            </section>
+          )}
+          <Esp32NodeInspector activeBeacon={activeBeacon} onOpenBleGuide={onOpenBleGuide} />
+        </>
       )}
     </div>
   );

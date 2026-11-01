@@ -96,7 +96,10 @@ public final class BeaconScanner {
     private final CopyOnWriteArrayList<DeviceListener> deviceListeners = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<StatusListener> statusListeners = new CopyOnWriteArrayList<>();
     private final Map<String, PresenceTracker> trackers = new HashMap<>();
-    private final Map<Integer, LaneInfo> lanesByMinor = new HashMap<>();
+    /** Street lanes keyed by {@link #beaconKey}(major, minor). */
+    private final Map<Integer, LaneInfo> lanesByBeacon = new HashMap<>();
+    /** First street lane of each place, for a known major with an unknown minor. */
+    private final Map<Integer, LaneInfo> firstLaneByMajor = new HashMap<>();
     private final Map<String, LaneInfo> lanesById = new HashMap<>();
 
     private BluetoothLeScanner leScanner;
@@ -166,7 +169,8 @@ public final class BeaconScanner {
 
     /**
      * JSON from the web layer:
-     * {entry, exit, defaultLaneId, pairedMac, lanes:[{minor, laneId, laneName, artisanCount}]}
+     * {entry, exit, defaultLaneId, pairedMac, lanes:[{major, minor, laneId, laneName, artisanCount}]}
+     * with one entry per street lane (major = heritage place, minor = street lane).
      */
     public synchronized void configure(String json) {
         if (json == null) return;
@@ -191,7 +195,8 @@ public final class BeaconScanner {
             String mac = o.isNull("pairedMac") ? null : o.optString("pairedMac", null);
             pairedMac = mac == null || mac.isEmpty() ? null : mac.toUpperCase(Locale.US);
 
-            lanesByMinor.clear();
+            lanesByBeacon.clear();
+            firstLaneByMajor.clear();
             lanesById.clear();
             JSONArray lanes = o.optJSONArray("lanes");
             if (lanes != null) {
@@ -200,7 +205,11 @@ public final class BeaconScanner {
                     LaneInfo info = new LaneInfo(
                             l.getString("laneId"), l.optString("laneName", "a heritage lane"), l.optInt("artisanCount", 0));
                     lanesById.put(info.id, info);
-                    if (l.has("minor")) lanesByMinor.put(l.getInt("minor"), info);
+                    if (l.has("major") && l.has("minor")) {
+                        int major = l.getInt("major");
+                        lanesByBeacon.put(beaconKey(major, l.getInt("minor")), info);
+                        if (!firstLaneByMajor.containsKey(major)) firstLaneByMajor.put(major, info);
+                    }
                 }
             }
             for (PresenceTracker t : trackers.values()) t.setThresholds(entryThreshold, exitThreshold);
@@ -417,8 +426,18 @@ public final class BeaconScanner {
     // Presence + lane alerts
     // ---------------------------------------------------------------------------------------------
 
+    private static int beaconKey(int major, int minor) {
+        return (major << 16) | (minor & 0xFFFF);
+    }
+
+    /** Mirrors resolveLocation() in src/utils/presence.ts. */
     private LaneInfo resolveLane(IBeaconParser.Beacon beacon) {
-        if (beacon != null && lanesByMinor.containsKey(beacon.minor)) return lanesByMinor.get(beacon.minor);
+        if (beacon != null) {
+            LaneInfo exact = lanesByBeacon.get(beaconKey(beacon.major, beacon.minor));
+            if (exact != null) return exact;
+            LaneInfo place = firstLaneByMajor.get(beacon.major);
+            if (place != null) return place;
+        }
         return defaultLaneId != null ? lanesById.get(defaultLaneId) : null;
     }
 
@@ -445,7 +464,7 @@ public final class BeaconScanner {
         String body = count > 0
                 ? count + (count == 1 ? " verified heritage artisan is" : " verified heritage artisans are")
                         + " just inside this lane. Tap to explore and leave a verified review."
-                : "Verified heritage artisans are just inside this lane. Tap to explore.";
+                : "Tap to explore the masters in the nearest lanes.";
         LaneNotifier.notifyLaneEntered(ctx, lane != null ? lane.id : "default", title, body);
     }
 

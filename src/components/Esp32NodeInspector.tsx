@@ -268,7 +268,7 @@ export const Esp32NodeInspector: React.FC<Esp32NodeInspectorProps> = ({
                 </span>
                 <div className="flex items-center gap-3 mt-1 text-[10px] text-stone-400">
                   <span>Major: {activeBeacon.hardware.major}</span>
-                  <span>Minor: {activeBeacon.hardware.minor}</span>
+                  <span>Minor: 2001–2003 (street lanes)</span>
                   <span>TxPower: {activeBeacon.hardware.txPowerDbm} dBm</span>
                 </div>
               </div>

@@ -28,16 +28,22 @@ On the phone:
 1. The native scanner (`android/.../ble/BeaconScanner.java`) reads every advertisement and parses the
    iBeacon frame. A beacon counts as a heritage beacon if it advertises the Virasat UUID, the name
    "Virasat Edge", or a MAC you paired manually.
-2. The beacon's **minor** maps it to its lane, and the Radar jumps to that lane.
+2. The beacon's **major** maps it to its heritage place and its **minor** to the street lane inside
+   it; the Nearby tab jumps to that place.
 3. RSSI is smoothed with a **median of the last ~4 s** (raw BLE readings jump 5–10 dBm).
 4. **Hysteresis**: you enter the lane at ≥ −68 dBm (~2–3 m) and only leave below −82 dBm, so the
    state doesn't flicker at the edge. Signing a review additionally needs ≥ −78 dBm.
 5. If the beacon is silent for **7 s**, it is treated as gone and reviews **re-lock**. The review
    form re-checks presence live, so walking away mid-review locks "Publish".
-6. Presence is **per lane**: being verified in one lane never unlocks artisans in another.
+6. Presence is **per street lane**: being verified in Street Lane 1 never unlocks the artisans in
+   Street Lane 2, let alone another place.
 
-Use **"Unlock reviews from here"** (Nearby → More details) to calibrate the unlock distance for your phone
-and venue (stored on the device, also applied to background alerts).
+The Nearby tab lists only the other heritage lanes until you arrive. Inside a street lane it shows
+**Masters in &lt;place&gt;** (that lane's workshops) and **In nearest lanes** — the two closest street
+lanes of the same place to browse (Lane 2 → Lanes 1 and 3; Lane 1 → Lanes 2 and 3).
+
+Use **"Unlock reviews from here"** (About → Beacon hardware → Live signal) to calibrate the unlock
+distance for your phone and venue (stored on the device, also applied to background alerts).
 
 ### Lane alerts
 - A heads-up **system notification + vibration** fires when you walk into a lane.
@@ -49,18 +55,27 @@ and venue (stored on the device, also applied to background alerts).
 
 ## ESP32 beacon configuration
 
-Flash each lane node as an **iBeacon**:
+Flash one node per street lane as an **iBeacon**:
 
 | Field | Value |
 |---|---|
-| UUID | `e2c56db5-dffb-48d2-b060-d0f5a71096e0` (same for every lane) |
-| Major | `101` |
-| Minor | unique per lane — `2001` Gangaur Ghat, `2` Jagdish Temple, `3` Hathi Pol, `4` Bhatiyani |
+| UUID | `e2c56db5-dffb-48d2-b060-d0f5a71096e0` (same for every node) |
+| Major | the place of attraction (table below) |
+| Minor | the street lane inside it (table below) |
 | Measured power (1 m) | `-59` dBm |
 | Device name | `Virasat Edge` |
 
-Lane ↔ minor mapping lives in `src/data/mockData.ts` (`hardware.minor`). You can verify a node with
-nRF Connect: it should show "Virasat Edge (iBeacon)" with the values above.
+| Major | Place of attraction | | Minor | Lane street |
+|---|---|---|---|---|
+| `101` | Gangaur Ghat Marg | | `2001` | Street Lane 1 |
+| `102` | Jagdish Temple Chohatta | | `2002` | Street Lane 2 |
+| `103` | Hathi Pol Weaver Alley | | `2003` | Street Lane 3 |
+| `104` | Bhatiyani Chohatta | | | |
+
+So the node in Gangaur Ghat's second lane advertises major `101`, minor `2002`. Places live in
+`src/data/mockData.ts` (`MOCK_BEACONS[].hardware.major`), street lanes in `STREET_LANES`, and each
+artisan's lane in `streetMinor`. You can verify a node with nRF Connect: it should show
+"Virasat Edge (iBeacon)" with the values above.
 
 ---
 

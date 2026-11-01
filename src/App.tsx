@@ -19,7 +19,7 @@ import { ProofOfPresenceReviewModal } from './components/ProofOfPresenceReviewMo
 import { AudioStoryPlayerModal } from './components/AudioStoryPlayerModal';
 import { GoogleMapsIntentModal } from './components/GoogleMapsIntentModal';
 import { BleHardwareScannerModal } from './components/BleHardwareScannerModal';
-import { MOCK_BEACONS, MOCK_ARTISANS } from './data/mockData';
+import { MOCK_BEACONS, MOCK_ARTISANS, STREET_LANES } from './data/mockData';
 import { Artisan, AndroidTab, VerifiedReview, PairedHardware } from './types';
 import {
   checkHysteresisProximity,
@@ -32,7 +32,9 @@ import {
   DEFAULT_THRESHOLDS,
   canReviewArtisan,
   isDefaultThresholds,
+  locationKey,
   thresholdsFromCalibration,
+  type LaneLocation,
   type PresenceThresholds,
 } from './utils/presence';
 import { useLiveBeacon } from './hooks/useLiveBeacon';
@@ -88,6 +90,7 @@ function loadThresholds(): PresenceThresholds {
 }
 
 const shortLaneName = (laneName: string) => laneName.split('(')[0].trim();
+const streetName = (minor: number) => STREET_LANES.find((s) => s.minor === minor)?.name ?? `Lane ${minor}`;
 
 export default function App() {
   // Inside the installed Android app Proof-of-Presence comes ONLY from the real ESP32 beacon.
@@ -95,9 +98,12 @@ export default function App() {
   const isNative = useMemo(detectNative, []);
 
   const beacons = MOCK_BEACONS;
+  const streets = STREET_LANES;
   const [activeTab, setActiveTab] = useState<AndroidTab>('discover');
   const [artisans, setArtisans] = useState<Artisan[]>(MOCK_ARTISANS);
   const [selectedBeaconId, setSelectedBeaconId] = useState<string>('lane_gangaur_ghat');
+  // Street lane the web-preview simulator stands in (the phone reads it from the beacon minor).
+  const [simStreetMinor, setSimStreetMinor] = useState<number>(STREET_LANES[0].minor);
   const [pairedHardware, setPairedHardware] = useState<PairedHardware | null>(() =>
     readStorage<PairedHardware | null>(PAIRED_HARDWARE_KEY, null)
   );
@@ -142,6 +148,8 @@ export default function App() {
   } = useLiveBeacon({
     enabled: isNative,
     beacons,
+    streets,
+    artisans,
     selectedLaneId: selectedBeaconId,
     pairedMac: pairedHardware?.macAddress,
     thresholds,
@@ -159,9 +167,9 @@ export default function App() {
   }, [liveReading?.laneId]);
 
   // --- Presence model ---
-  // Presence belongs to the lane the visitor is physically in: on the phone that is the lane whose
-  // beacon is detected (independent of which lane is being browsed); in the web preview it is the
-  // simulated lane on screen.
+  // Presence belongs to the place (beacon major) and street lane (minor) the visitor is physically
+  // in: on the phone that is the beacon it detects (independent of which place is being browsed);
+  // in the web preview it is the simulated place and street lane.
   const simulatedRssi = useMemo(() => {
     const d = Math.max(1, userDistanceMeters);
     // Calibrated BLE path loss for stone alleys: 1 m -> -46 dBm, 8 m -> -66 dBm, 40 m -> -82 dBm
@@ -170,6 +178,9 @@ export default function App() {
   }, [userDistanceMeters]);
 
   const presenceLaneId: string | null = isNative ? liveReading?.laneId ?? null : selectedBeaconId;
+  const presenceStreetMinor: number | null = isNative ? liveReading?.streetMinor ?? null : simStreetMinor;
+  const presenceKey =
+    presenceLaneId !== null && presenceStreetMinor !== null ? locationKey(presenceLaneId, presenceStreetMinor) : null;
   const presenceRssi = isNative ? liveReading?.rssi ?? NO_SIGNAL_RSSI : simulatedRssi;
   const presenceLane = beacons.find((b) => b.id === presenceLaneId) ?? activeBeacon;
   const gateThresholds: PresenceThresholds = isNative
@@ -181,12 +192,12 @@ export default function App() {
       };
 
   // Hysteresis as real state (prevents flapping and re-locks the moment the signal drops out).
-  // Moving to a different lane's beacon starts outside again.
+  // Moving to a different street lane's beacon starts outside again.
   const [isPresenceInside, setIsPresenceInside] = useState<boolean>(false);
-  const hysteresisLaneRef = useRef<string | null>(presenceLaneId);
+  const hysteresisLaneRef = useRef<string | null>(presenceKey);
   useEffect(() => {
-    const laneChanged = hysteresisLaneRef.current !== presenceLaneId;
-    hysteresisLaneRef.current = presenceLaneId;
+    const laneChanged = hysteresisLaneRef.current !== presenceKey;
+    hysteresisLaneRef.current = presenceKey;
     setIsPresenceInside((prev) =>
       checkHysteresisProximity(
         presenceRssi,
@@ -195,14 +206,19 @@ export default function App() {
         gateThresholds.exit
       )
     );
-  }, [presenceRssi, presenceLaneId, gateThresholds.entry, gateThresholds.exit]);
+  }, [presenceRssi, presenceKey, gateThresholds.entry, gateThresholds.exit]);
 
   const presenceCheck = useMemo(
     () => canSubmitReviewWithProof(isPresenceInside, presenceRssi, gateThresholds.review),
     [isPresenceInside, presenceRssi, gateThresholds.review]
   );
-  /** Lane the visitor may review right now (null = locked everywhere). */
-  const presentLaneId = presenceCheck.canReview ? presenceLaneId : null;
+  /** Street lane the visitor may review right now (null = locked everywhere). */
+  const presentLocation: LaneLocation | null =
+    presenceCheck.canReview && presenceLaneId !== null && presenceStreetMinor !== null
+      ? { laneId: presenceLaneId, streetMinor: presenceStreetMinor }
+      : null;
+  const mastersAt = (laneId: string, minor: number) =>
+    artisans.filter((a) => a.laneId === laneId && a.streetMinor === minor).length;
 
   // What the radar shows for the lane currently on screen.
   const selectedIsPresenceLane = presenceLaneId === selectedBeaconId;
@@ -218,12 +234,12 @@ export default function App() {
       : null
     : userDistanceMeters;
 
-  // In-app heads-up banner when entering a lane (system notification is raised natively).
+  // In-app heads-up banner when entering a street lane (system notification is raised natively).
   useEffect(() => {
-    if (isPresenceInside && presenceLaneId && hasDismissedAlertForLane !== presenceLaneId) {
+    if (isPresenceInside && presenceKey && presenceStreetMinor !== null && hasDismissedAlertForLane !== presenceKey) {
       setHeadsUpAlert({
-        laneName: shortLaneName(presenceLane.laneName),
-        artisanCount: artisans.filter((a) => a.laneId === presenceLaneId).length,
+        laneName: `${shortLaneName(presenceLane.laneName)} · ${streetName(presenceStreetMinor)}`,
+        artisanCount: mastersAt(presenceLane.id, presenceStreetMinor),
         distanceMeters: isNative
           ? calculateDistanceFromRssi(presenceRssi, liveReading?.txPower ?? presenceLane.hardware.txPowerDbm)
           : userDistanceMeters,
@@ -235,7 +251,7 @@ export default function App() {
     }
     // presenceRssi / userDistanceMeters are deliberately not dependencies: the banner shows the
     // distance at the moment of entry and must not re-render on every packet.
-  }, [isPresenceInside, presenceLaneId, hasDismissedAlertForLane, artisans, presenceLane, isNative]);
+  }, [isPresenceInside, presenceKey, presenceStreetMinor, hasDismissedAlertForLane, artisans, presenceLane, isNative]);
 
   // Real-time Firestore synchronization across all connected screens/devices
   useEffect(() => {
@@ -301,7 +317,7 @@ export default function App() {
         !!headsUpAlert,
         () => {
           setHeadsUpAlert(null);
-          setHasDismissedAlertForLane(presenceLaneId);
+          setHasDismissedAlertForLane(presenceKey);
         },
       ],
       [activeTab !== 'discover', () => setActiveTab('discover')],
@@ -345,6 +361,11 @@ export default function App() {
     setHasDismissedAlertForLane(null);
   };
 
+  const handleSelectStreet = (minor: number) => {
+    setSimStreetMinor(minor);
+    setHasDismissedAlertForLane(null);
+  };
+
   // Toggle saved artisan with real-time multi-screen Firestore sync
   const handleToggleSaveArtisan = (id: string) => {
     const artisan = artisans.find((a) => a.id === id);
@@ -365,22 +386,22 @@ export default function App() {
 
   /** Review gate for one artisan, with a human explanation either way. */
   const reviewGateFor = (artisan: Artisan): { canReview: boolean; message: string } => {
-    const laneNameOf = (laneId: string) =>
-      shortLaneName(beacons.find((b) => b.id === laneId)?.laneName ?? 'this lane');
-    const artisanLane = laneNameOf(artisan.laneId);
+    const where = (loc: LaneLocation) =>
+      `${shortLaneName(beacons.find((b) => b.id === loc.laneId)?.laneName ?? 'this lane')} · ${streetName(loc.streetMinor)}`;
+    const artisanWhere = where(artisan);
 
-    if (canReviewArtisan(presentLaneId, artisan.laneId)) {
+    if (canReviewArtisan(presentLocation, artisan)) {
       return {
         canReview: true,
         message: isNative
-          ? `Your phone detects the ${artisanLane} beacon at ${presenceRssi} dBm — you are verified on site.`
+          ? `Your phone detects the ${artisanWhere} beacon at ${presenceRssi} dBm — you are verified on site.`
           : `Simulated presence at ${presenceRssi} dBm. Web-preview reviews are marked "Simulated", not verified.`,
       };
     }
-    if (presentLaneId && presentLaneId !== artisan.laneId) {
+    if (presentLocation) {
       return {
         canReview: false,
-        message: `You're verified in ${laneNameOf(presentLaneId)}. Walk to ${artisanLane} to review this workshop.`,
+        message: `You're verified in ${where(presentLocation)}. Walk to ${artisanWhere} to review this workshop.`,
       };
     }
     if (isNative) {
@@ -393,7 +414,7 @@ export default function App() {
           message: 'Allow Bluetooth and Location so your phone can detect the lane beacon.',
         };
       }
-      if (liveReading && liveReading.laneId === artisan.laneId) {
+      if (liveReading && liveReading.laneId === artisan.laneId && liveReading.streetMinor === artisan.streetMinor) {
         return {
           canReview: false,
           message: `Signal too weak (${liveReading.rssi} dBm). Walk closer to the workshop to unlock reviews.`,
@@ -401,15 +422,15 @@ export default function App() {
       }
       return {
         canReview: false,
-        message: `Walk into ${artisanLane} — reviews unlock once your phone detects its beacon nearby.`,
+        message: `Walk into ${artisanWhere} — reviews unlock once your phone detects its beacon nearby.`,
       };
     }
     return {
       canReview: false,
       message:
-        selectedBeaconId === artisan.laneId
+        selectedBeaconId === artisan.laneId && simStreetMinor === artisan.streetMinor
           ? 'Move the simulator inside the lane to try a review (web preview).'
-          : `Select ${artisanLane} in the simulator and move inside the lane to try a review (web preview).`,
+          : `Select ${artisanWhere} in the simulator and move inside the lane to try a review (web preview).`,
     };
   };
 
@@ -512,11 +533,11 @@ export default function App() {
             onExplore={() => {
               setActiveTab('discover');
               setHeadsUpAlert(null);
-              setHasDismissedAlertForLane(presenceLaneId);
+              setHasDismissedAlertForLane(presenceKey);
             }}
             onDismiss={() => {
               setHeadsUpAlert(null);
-              setHasDismissedAlertForLane(presenceLaneId);
+              setHasDismissedAlertForLane(presenceKey);
             }}
           />
         )}
@@ -527,8 +548,13 @@ export default function App() {
             <NearbyStatusCard
               state={nearbyState}
               laneName={shortLaneName(activeBeacon.laneName)}
+              streetName={selectedIsPresenceLane && presenceStreetMinor !== null ? streetName(presenceStreetMinor) : null}
               landmark={activeBeacon.landmark}
-              artisanCount={artisans.filter((a) => a.laneId === activeBeacon.id).length}
+              artisanCount={
+                selectedIsPresenceLane && presenceStreetMinor !== null
+                  ? mastersAt(activeBeacon.id, presenceStreetMinor)
+                  : artisans.filter((a) => a.laneId === activeBeacon.id).length
+              }
               crowdLabel={crowdLabel}
               signalLevel={signalLevel}
               canReview={selectedIsPresenceLane && presenceCheck.canReview}
@@ -541,30 +567,19 @@ export default function App() {
                     beacons={beacons}
                     selectedBeaconId={selectedBeaconId}
                     onSelectBeacon={handleSelectBeacon}
+                    streets={streets}
+                    selectedStreetMinor={simStreetMinor}
+                    onSelectStreet={handleSelectStreet}
                     distanceMeters={userDistanceMeters}
                     onDistanceChange={setUserDistanceMeters}
                   />
                 )
               }
-            >
-              {isNative && (
-                <SignalDetails
-                  liveReading={liveReading}
-                  rssi={selectedRssi}
-                  distance={selectedDistance}
-                  scannerStatus={scannerStatus}
-                  actions={bleActions}
-                  thresholds={thresholds}
-                  isCalibrated={!isDefaultThresholds(thresholds)}
-                  onCalibrate={handleCalibrate}
-                  onResetCalibration={handleResetCalibration}
-                  pairedHardware={pairedHardware}
-                  onOpenBleGuide={() => setIsBleGuideOpen(true)}
-                />
-              )}
-            </NearbyStatusCard>
+            />
             <DiscoverTab
               activeBeacon={activeBeacon}
+              currentStreetMinor={selectedInsideZone ? presenceStreetMinor : null}
+              streets={streets}
               artisans={artisans}
               onSelectArtisan={setActiveDetailArtisan}
               onPlayAudio={setAudioArtisan}
@@ -600,7 +615,27 @@ export default function App() {
         )}
 
         {activeTab === 'about' && (
-          <AboutTab activeBeacon={activeBeacon} onOpenBleGuide={() => setIsBleGuideOpen(true)} />
+          <AboutTab
+            activeBeacon={activeBeacon}
+            onOpenBleGuide={() => setIsBleGuideOpen(true)}
+            signalPanel={
+              isNative ? (
+                <SignalDetails
+                  liveReading={liveReading}
+                  rssi={selectedRssi}
+                  distance={selectedDistance}
+                  scannerStatus={scannerStatus}
+                  actions={bleActions}
+                  thresholds={thresholds}
+                  isCalibrated={!isDefaultThresholds(thresholds)}
+                  onCalibrate={handleCalibrate}
+                  onResetCalibration={handleResetCalibration}
+                  pairedHardware={pairedHardware}
+                  onOpenBleGuide={() => setIsBleGuideOpen(true)}
+                />
+              ) : undefined
+            }
+          />
         )}
       </AndroidPhoneFrame>
 
@@ -608,7 +643,6 @@ export default function App() {
       {isBleGuideOpen && (
         <BleHardwareScannerModal
           isNative={isNative}
-          activeLaneName={activeBeacon.laneName}
           activeBeaconCode={activeBeacon.beaconCode}
           pairedHardware={pairedHardware}
           liveReading={liveReading}

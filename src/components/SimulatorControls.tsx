@@ -5,12 +5,15 @@
 
 import React from 'react';
 import { Footprints } from 'lucide-react';
-import type { LaneBeacon } from '../types';
+import type { LaneBeacon, StreetLane } from '../types';
 
 interface SimulatorControlsProps {
   beacons: LaneBeacon[];
   selectedBeaconId: string;
   onSelectBeacon: (id: string) => void;
+  streets: StreetLane[];
+  selectedStreetMinor: number;
+  onSelectStreet: (minor: number) => void;
   distanceMeters: number;
   onDistanceChange: (meters: number) => void;
 }
@@ -26,24 +29,39 @@ export const SimulatorControls: React.FC<SimulatorControlsProps> = ({
   beacons,
   selectedBeaconId,
   onSelectBeacon,
+  streets,
+  selectedStreetMinor,
+  onSelectStreet,
   distanceMeters,
   onDistanceChange,
 }) => (
   <div className="rounded-2xl bg-stone-950/60 p-3 space-y-2.5">
-    <div className="flex items-center justify-between gap-2">
-      <span className="flex items-center gap-1.5 text-xs font-semibold text-stone-300">
-        <Footprints className="w-4 h-4 text-amber-400" />
-        Try it: walk to a lane
-      </span>
+    <span className="flex items-center gap-1.5 text-xs font-semibold text-stone-300">
+      <Footprints className="w-4 h-4 text-amber-400" />
+      Try it: walk to a lane
+    </span>
+    <div className="grid grid-cols-[1fr_auto] gap-2">
       <select
         value={selectedBeaconId}
         onChange={(e) => onSelectBeacon(e.target.value)}
-        aria-label="Lane"
-        className="bg-stone-900 border border-stone-700 text-stone-200 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-amber-500 max-w-[55%]"
+        aria-label="Place"
+        className="min-w-0 bg-stone-900 border border-stone-700 text-stone-200 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-amber-500"
       >
         {beacons.map((b) => (
           <option key={b.id} value={b.id}>
             {b.laneName.split('(')[0].trim()}
+          </option>
+        ))}
+      </select>
+      <select
+        value={selectedStreetMinor}
+        onChange={(e) => onSelectStreet(Number(e.target.value))}
+        aria-label="Street lane"
+        className="bg-stone-900 border border-stone-700 text-stone-200 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-amber-500"
+      >
+        {streets.map((s) => (
+          <option key={s.minor} value={s.minor}>
+            {s.name}
           </option>
         ))}
       </select>

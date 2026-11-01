@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
-import { Radio, MapPin, CheckCircle2, Lock, ChevronDown, AlertCircle } from 'lucide-react';
+import React from 'react';
+import { Radio, MapPin, CheckCircle2, Lock, AlertCircle } from 'lucide-react';
 import type { ScannerBlocker } from '../utils/scannerBlocker';
 
 export type NearbyState = 'here' | 'near' | 'searching' | 'blocked';
@@ -12,7 +12,10 @@ export type NearbyState = 'here' | 'near' | 'searching' | 'blocked';
 interface NearbyStatusCardProps {
   state: NearbyState;
   laneName: string;
+  /** Street lane the detected beacon belongs to (null when no lane is detected). */
+  streetName: string | null;
   landmark: string;
+  /** Masters in that street lane. */
   artisanCount: number;
   /** Plain-language crowd status, e.g. "Quiet now". */
   crowdLabel: string;
@@ -25,8 +28,6 @@ interface NearbyStatusCardProps {
   isDemo: boolean;
   /** Always-visible extra content (the demo slider in the web preview). */
   footer?: React.ReactNode;
-  /** Technical details, hidden behind "More details". */
-  children?: React.ReactNode;
 }
 
 const SIGNAL_LABEL = ['No signal', 'Far', 'Nearby', 'Close', 'Very close'] as const;
@@ -41,6 +42,7 @@ const THEME: Record<NearbyState, { ring: string; icon: string; eyebrow: string }
 export const NearbyStatusCard: React.FC<NearbyStatusCardProps> = ({
   state,
   laneName,
+  streetName,
   landmark,
   artisanCount,
   crowdLabel,
@@ -50,11 +52,12 @@ export const NearbyStatusCard: React.FC<NearbyStatusCardProps> = ({
   onBlockerAction,
   isDemo,
   footer,
-  children,
 }) => {
-  const [showDetails, setShowDetails] = useState(false);
   const theme = THEME[state];
-  const masters = `${artisanCount} master artisan${artisanCount === 1 ? '' : 's'}`;
+  const masters =
+    artisanCount === 0
+      ? 'no workshops in this lane yet'
+      : `${artisanCount} master artisan${artisanCount === 1 ? '' : 's'} here`;
 
   const eyebrow = { here: "You're here", near: 'Almost there', searching: 'Exploring', blocked: 'Action needed' }[state];
   const headline = {
@@ -64,8 +67,8 @@ export const NearbyStatusCard: React.FC<NearbyStatusCardProps> = ({
     blocked: blocker?.title ?? 'Action needed',
   }[state];
   const subline = {
-    here: `${masters} just inside · ${crowdLabel}`,
-    near: 'Walk a little closer to the workshops.',
+    here: `${streetName ? `${streetName} · ` : ''}${masters} · ${crowdLabel}`,
+    near: `Walk a little closer to ${streetName ?? 'the workshops'}.`,
     searching: isDemo
       ? 'Use the slider below to walk into the lane.'
       : 'Walk into an old-city lane — we’ll alert you when you arrive.',
@@ -164,20 +167,6 @@ export const NearbyStatusCard: React.FC<NearbyStatusCardProps> = ({
         )}
 
         {footer}
-
-        {children && (
-          <div>
-            <button
-              onClick={() => setShowDetails((v) => !v)}
-              aria-expanded={showDetails}
-              className="w-full flex items-center justify-center gap-1 text-xs text-stone-400 hover:text-stone-200 pt-0.5"
-            >
-              {showDetails ? 'Hide details' : 'More details'}
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
-            </button>
-            {showDetails && <div className="mt-3 pt-3 border-t border-stone-800 space-y-3">{children}</div>}
-          </div>
-        )}
       </div>
     </section>
   );

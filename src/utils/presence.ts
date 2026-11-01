@@ -8,7 +8,7 @@
  * The native layer mirrors the smoothing + hysteresis rules in PresenceTracker.java.
  */
 
-import type { LaneBeacon } from '../types';
+import type { Artisan, LaneBeacon, StreetLane } from '../types';
 import type { IBeaconInfo } from './bleBridge';
 
 /** Shared iBeacon UUID of every physical Virasat Edge lane node. */
@@ -89,21 +89,50 @@ export function isHeritageBeacon(input: {
   return paired !== '' && paired === normalizeMac(input.address);
 }
 
+/** Where the visitor is: a heritage place (iBeacon major) and a street lane in it (minor). */
+export interface LaneLocation {
+  laneId: string;
+  streetMinor: number;
+}
+
+/** Stable key for one street lane of one place, e.g. "lane_gangaur_ghat#2001". */
+export function locationKey(laneId: string, streetMinor: number): string {
+  return `${laneId}#${streetMinor}`;
+}
+
 /**
- * Which lane does a detected beacon belong to? Each lane node advertises its own iBeacon minor;
- * a heritage beacon with an unknown minor (or a paired non-iBeacon device) is bound to the lane
- * currently on screen.
+ * Which place and street lane does a detected beacon belong to? The iBeacon major names the place,
+ * the minor the street lane. An unknown minor falls back to the place's first street lane; an
+ * unknown major (or a paired non-iBeacon device) to the first street lane of the place on screen.
+ * BeaconScanner.java resolves lanes the same way for background alerts.
  */
-export function resolveLaneId(
+export function resolveLocation(
   beacon: IBeaconInfo | null | undefined,
   lanes: Pick<LaneBeacon, 'id' | 'hardware'>[],
+  streets: StreetLane[],
   fallbackLaneId: string
-): string {
+): LaneLocation {
+  const firstStreet = streets[0]?.minor ?? 0;
   if (beacon) {
-    const match = lanes.find((l) => l.hardware.minor === beacon.minor);
-    if (match) return match.id;
+    const lane = lanes.find((l) => l.hardware.major === beacon.major);
+    if (lane) {
+      const street = streets.find((s) => s.minor === beacon.minor);
+      return { laneId: lane.id, streetMinor: street ? street.minor : firstStreet };
+    }
   }
-  return fallbackLaneId;
+  return { laneId: fallbackLaneId, streetMinor: firstStreet };
+}
+
+/**
+ * The street lanes a visitor can browse from where they stand: the `count` lanes closest by number
+ * (lane 2 -> lanes 1 and 3; lane 1 -> lanes 2 and 3), in lane order.
+ */
+export function nearestStreetLanes(currentMinor: number, streets: StreetLane[], count = 2): StreetLane[] {
+  return streets
+    .filter((s) => s.minor !== currentMinor)
+    .sort((a, b) => Math.abs(a.minor - currentMinor) - Math.abs(b.minor - currentMinor) || a.minor - b.minor)
+    .slice(0, count)
+    .sort((a, b) => a.minor - b.minor);
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -126,7 +155,10 @@ export function isDefaultThresholds(t: PresenceThresholds): boolean {
   );
 }
 
-/** Proof-of-Presence is per lane: being verified in one lane must not unlock another lane. */
-export function canReviewArtisan(presentLaneId: string | null, artisanLaneId: string): boolean {
-  return presentLaneId !== null && presentLaneId === artisanLaneId;
+/** Proof-of-Presence is per street lane: being verified in one lane must not unlock another. */
+export function canReviewArtisan(
+  present: LaneLocation | null,
+  artisan: Pick<Artisan, 'laneId' | 'streetMinor'>
+): boolean {
+  return present !== null && present.laneId === artisan.laneId && present.streetMinor === artisan.streetMinor;
 }
